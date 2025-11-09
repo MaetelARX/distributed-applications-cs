@@ -1,0 +1,253 @@
+﻿@model BookDisplayModel
+@{
+}
+<style>
+    .dropdown-submenu {
+        position: relative;
+    }
+
+        .dropdown-submenu > .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -1px;
+        }
+
+    body {
+        background-color: #f1f0ef;
+    }
+
+    .out-of-stock-button {
+        color: red;
+        background-color: transparent;
+        border-radius: 5px;
+        font-weight: bold;
+        padding: 5px 15px;
+        cursor: not-allowed;
+    }
+
+        .out-of-stock-button:hover {
+            color: red;
+            background-color: transparent;
+            border-color: red;
+        }
+
+    .card {
+        overflow: hidden;
+    }
+
+    .card-img-top {
+        transition: transform 0.5s ease-in-out, filter 1s linear;
+        transform-origin: center;
+        filter: brightness(100%);
+    }
+
+    .card:hover {
+        transform: scale(1.07);
+    }
+
+    .details-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+    }
+
+    .card:hover .details-button {
+        display: block;
+    }
+
+    .add-to-cart-animation {
+        transform: scale(1.1);
+        transition: transform 0.3s ease-in-out;
+    }
+</style>
+
+<div class="my-2">
+    <form asp-action="Index" class="row row-cols-lg-auto g-3 align-items-center">
+        <div class="col-12 mx-4">
+            <label class="visually-hidden" for="genreId">Genres</label>
+            <select class="form-select" id="genreId" name="genreId">
+                <option selected>Genre...</option>
+                @foreach (var genre in Model.Genres)
+                {
+                    <option selected="@(genre.Id == Model.GenreId)" value="@genre.Id">@genre.GenreName</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="visually-hidden" for="sterm">Search by title</label>
+            <div class="input-group">
+                <div class="input-group-text"></div>
+                <input type="text" class="form-control" value="@Model.STerm" id="sterm" name="sterm" placeholder="Search...">
+            </div>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="/Home/Index" class="btn btn-dark">Reset</a>
+        </div>
+
+        <div class="col-12 mx-4">
+            <label class="visually-hidden" for="sortBy">Sort By:</label>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="sortByDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    @switch (Model.SortBy)
+                    {
+                        case "PriceAsc":
+                        case "PriceDesc":
+                            <text>Price</text>
+                            break;
+                        case "Title":
+                            <text>Title</text>
+                            break;
+                        case "Author":
+                            <text>Author</text>
+                            break;
+                        default:
+                            <text>Sort By</text>
+                            break;
+                    }
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="sortByDropdown">
+                    <li><a class="dropdown-item" href="?sortBy=Title">Title</a></li>
+                    <li><a class="dropdown-item" href="?sortBy=Author">Author</a></li>
+                    <li class="dropdown-submenu">
+                        <a class="dropdown-item dropdown-toggle" href="#">Price</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="?sortBy=PriceAsc">Ascending</a></li>
+                            <li><a class="dropdown-item" href="?sortBy=PriceDesc">Descending</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="w-100 mt-4 d-flex flex-wrap">
+    @foreach (var book in Model.Books)
+    {
+        <div class="book-card card mx-4 mb-4" style="width: 17rem; position: relative; overflow: hidden; transition: transform 0.3s ease-in-out;">
+            <img src="@book.Image" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">@book.BookName</h5>
+                <p class="card-text">
+                    Genre: @book.GenreName<br>
+                    Author: @book.AuthorName<br>
+                    Price: @($"{book.Price:f2}")лв<br>
+                </p>
+                @if (book.Quantity > 0)
+                {
+                    <button type="button" onclick="add(@book.Id, this)" class="btn btn-primary" data-quantity="@book.Quantity">
+                        Add to cart
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn out-of-stock-button" disabled>Out of stock</button>
+                }
+            </div>
+            <button class="details-button btn btn-dark" onclick="location.href='@Url.Action("ViewDetails", "Book", new { bookId = book.Id })'">Details</button>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function add(bookId, buttonElement) {
+            var usernameEl = document.getElementById("username");
+            if (usernameEl == null) {
+                window.location.href = "/Identity/Account/Login";
+                return;
+            }
+
+            let currentQuantity = parseInt(buttonElement.getAttribute('data-quantity'));
+
+            if (currentQuantity <= 0) {
+                return;
+            }
+
+            try {
+                var response = await fetch(`/Cart/AddItem?bookId=${bookId}`);
+                if (response.status == 200) {
+                    var result = await response.json();
+                    var cartCountEl = document.getElementById("cartCount");
+                    cartCountEl.innerHTML = result;
+
+                    buttonElement.classList.add('add-to-cart-animation');
+
+                    setTimeout(function () {
+                        buttonElement.classList.remove('add-to-cart-animation');
+                    }, 500);
+
+                    currentQuantity -= 1;
+                    buttonElement.setAttribute('data-quantity', currentQuantity);
+
+                    if (currentQuantity <= 0) {
+                        buttonElement.innerText = 'Out of stock';
+                        buttonElement.disabled = true;
+                        buttonElement.classList.remove('btn-primary');
+                        buttonElement.classList.add('btn-secondary');
+                    }
+                }
+            } catch (err) {
+                console.log("Error adding item to cart:", err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            var dropdowns = document.querySelectorAll('.dropdown-submenu');
+            dropdowns.forEach(function (dropdown) {
+                dropdown.addEventListener('mouseenter', function () {
+                    var submenu = this.querySelector('.dropdown-menu');
+                    if (submenu) submenu.classList.add('show');
+                });
+                dropdown.addEventListener('mouseleave', function () {
+                    var submenu = this.querySelector('.dropdown-menu');
+                    if (submenu) submenu.classList.remove('show');
+                });
+            });
+
+            document.querySelectorAll('.card-img-top').forEach(function (image) {
+                let timer;
+                let brightness = 100;
+
+                image.addEventListener('mouseenter', function () {
+                    timer = setInterval(() => {
+                        if (brightness < 130) {
+                            brightness += 2;
+                            image.style.filter = `brightness(${brightness}%)`;
+                        } else {
+                            clearInterval(timer);
+                        }
+                    }, 50);
+                });
+
+                image.addEventListener('mouseleave', function () {
+                    clearInterval(timer);
+                    brightness = 100;
+                    image.style.filter = `brightness(${brightness}%)`;
+                });
+            });
+
+            await loadCartCount();
+        });
+
+        async function loadCartCount() {
+            try {
+                var response = await fetch(`/Cart/GetTotalItemInCart`);
+                if (response.status == 200) {
+                    var result = await response.json();
+                    var cartCountEl = document.getElementById("cartCount");
+                    if (cartCountEl) {
+                        cartCountEl.innerHTML = result;
+                    }
+                }
+            } catch (err) {
+                console.log("Error fetching cart count:", err);
+            }
+        }
+    </script>
+}

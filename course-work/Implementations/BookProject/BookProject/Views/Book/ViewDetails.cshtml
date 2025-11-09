@@ -1,0 +1,39 @@
+﻿@model BookProject.Models.Details
+@{
+    ViewData["Title"] = "Book Details";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h4 class="text-secondary">Description</h4>
+                <p class="lead">@Model.Description</p>
+            </div>
+            <div class="mb-4">
+                <h4 class="text-secondary">Publisher</h4>
+                <p class="lead">@Model.Publisher</p>
+            </div>
+            <div class="mb-4">
+                <h4 class="text-secondary">Publication Date</h4>
+                <p class="lead">@Model.PublicationDate?.ToString("dd MMMM yyyy")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .container {
+        max-width: 800px;
+    }
+    .card {
+        border-radius: 10px;
+    }
+    .card-header {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+</style>

@@ -1,0 +1,80 @@
+﻿@model ShoppingCart
+@{
+    ViewData["Title"] = "GetUserCart";
+}
+<style>
+    table {
+        border: 2px solid black;
+    }
+    td {
+        text-align: center;
+    }
+</style>
+<div style="width:90%; margin:auto" class="mt-4">
+    @if (Model != null && Model.CartDetails != null && Model.CartDetails.Count > 0)
+    {
+        <h3>My Cart</h3>
+        <table class="table table-bordered">
+            <tr>
+                <th>Книга</th>
+                <th>Изображение</th>
+                <th>Жанр</th>
+                <th>Цена За Количество</th>
+                <th>Цена</th>
+                <th>Добавяне/Махане на бройка</th>
+            </tr>
+            @foreach (var item in Model.CartDetails)
+            {
+                <tr>
+                    <td>@item.Book.BookName</td>
+                    <td>
+                        @if (string.IsNullOrEmpty(item.Book.Image))
+                        {
+                            <img src="/images/NoImage.png" style="width:80px;height:100px"/>
+                        }
+                        else
+                        {
+                            <img src="@item.Book.Image" style="width:80px;height:120px" />
+                        }
+                    </td>
+                    <td>@item.Book.Genre.GenreName</td>
+                    @if(item.Quantity > 1)
+                    {
+                        <td>@($"{item.Book.Price:f2} X {@item.Quantity}")</td>
+                    }
+                    else
+                    {
+                        <td>@($"{item.Book.Price:f2}")</td>
+                    }
+                    <td>@($"{item.Book.Price*@item.Quantity:f2} лв")</td>
+                    <td>
+                        @if (item.Quantity < item.Book.Stock.Quantity)
+                        {
+                            <a class="btn btn-info" href="/Cart/AddItem?bookId=@item.BookId&redirect=1">+</a>
+                        }
+                        else
+                        {
+                            <span style="border: 1px solid;padding: 5px
+                            8px;color: red;border-radius: 5px;">Out of stock</span>
+                        }
+                        <a class="btn btn-info" href="/Cart/RemoveItem?bookId=@item.BookId">-</a>
+                    </td>
+                </tr>
+            }
+        </table>
+
+        <div class="my-2">
+            <h5>Общо</h5>
+            @($"{Model.CartDetails.Select(item => item.Book.Price * item.Quantity).Sum():f2} лв")
+        </div>
+
+        <div class="my-2">
+            <a class="btn btn-primary" href="/Cart/Checkout">Checkout</a>
+        </div>
+    }
+    else{
+        <h5>Cart Is empty</h5>
+    }
+</div>
+
+
