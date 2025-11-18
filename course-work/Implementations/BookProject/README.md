@@ -1,3 +1,6 @@
+Имена: Пламен Ивелинов Желев
+Факултетен номер: 2301261050
+
 📚 Welcome to BookProject:
 
 A Comprehensive Online Bookstore Management System
